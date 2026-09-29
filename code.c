@@ -1,0 +1,152 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <limits.h>
+#include <string.h>
+#include <math.h>
+
+#define MAX_NOTES     20
+#define MAX_MATIERES   4
+#define MAX_UE         5
+
+//_______________________________________________________TYPES_________________________________________________
+typedef struct {
+    char type[32]; // DS, TP, Khôlle, CC
+    float valeur; // /20
+    float coeff;
+}Note;
+typedef struct {
+    char nom[32];
+    float coeff;
+    Note notes[MAX_NOTES];
+    int nb_notes;
+}Matiere;
+typedef struct {
+    char nom[32];
+    float coeff;
+    Matiere matieres[MAX_MATIERES];
+    int nb_matieres;
+}UE;
+
+
+//___________________________________________________FONCTIONS___________________________________________________
+float moyenne_matiere(const Matiere *m){
+    if(m->nb_notes == 0){ return -1;}
+    float somme=0;
+    float somme_des_coeff = 0;
+    for(int i=0; i<m->nb_notes; i++){
+        somme += m->notes[i].coeff * m->notes[i].valeur;
+        somme_des_coeff += m->notes[i].coeff;
+    }
+    if(somme_des_coeff == 0){ return -1;}
+    return (somme/somme_des_coeff);
+}
+float moyenne_UE(const UE *ue){
+    if(ue->nb_matieres == 0){ return -1;}
+
+    float somme=0;
+    float somme_des_coeff = 0;
+    for(int i=0; i<ue->nb_matieres; i++){
+        float moy=moyenne_matiere(&ue->matieres[i]);
+        if(moy>=0){
+            somme += ue->matieres[i].coeff * moy;
+            somme_des_coeff += ue->matieres[i].coeff;
+        }
+    }
+    if(somme_des_coeff == 0){ return -1;}
+    return (somme/somme_des_coeff);
+}
+float moyenne_generale(const UE *tab, int n){       // n : nb d'UE
+    if(n == 0){ return -1;}
+
+    float somme=0;
+    float somme_des_coeff = 0;
+    for(int i=0; i<n; i++){
+        float moy=moyenne_UE(&tab[i]);
+        if(moy>=0){
+            somme += tab[i].coeff * moy;
+            somme_des_coeff += tab[i].coeff;
+        }
+    }
+    if(somme_des_coeff == 0){ return -1;}
+    return (somme/somme_des_coeff);
+}
+
+void afficher_UE(const UE *ue){
+    float moy = moyenne_UE(ue);
+    if(moy<0){
+        printf("%s: pas de notes...\n", ue->nom);
+    }else{
+        printf("%s : %.2f\n", ue->nom, moy);
+    }
+}
+void afficher_moyennes(const UE *tab, int n){
+    for(int i=0; i<n; i++){
+        afficher_UE(&tab[i]);
+    }
+    float moy = moyenne_generale(tab, n);
+    if(moy<0){
+        printf("ERREUR : Pas de notes...\n");
+    }else{
+        printf("Moyenne générale : %.2f\n", moy);       
+    }
+}
+
+void ajouter_note(Matiere *m, float valeur, float coeff){
+    if(m->nb_notes>=MAX_NOTES){
+        printf("ERREUR : Trop de notes !\n");
+        return;
+    }else{
+        m->notes[m->nb_notes].coeff=coeff;
+        m->notes[m->nb_notes].valeur=valeur;
+        m->nb_notes += 1;
+    }
+}
+
+//__________________________________________________MAIN_________________________________________________
+int main(){
+    UE ue2 = {0};
+    strcpy(ue2.nom, "Physique-Chimie");
+    ue2.coeff = 9;
+    ue2.nb_matieres = 2;
+
+    ue2.matieres[0].coeff = 4;
+    ue2.matieres[0].notes[0].valeur = 18;
+    ue2.matieres[0].notes[0].coeff = 3;
+    ue2.matieres[0].nb_notes = 1;
+
+    UE ue1 = {0};
+    strcpy(ue1.nom, "Maths-Info");
+    ue1.coeff = 12;
+    ue1.nb_matieres = 3;
+
+    ue1.matieres[0].coeff = 4;
+    ue1.matieres[0].notes[0].valeur = 14;
+    ue1.matieres[0].notes[0].coeff = 3;
+    ue1.matieres[0].nb_notes = 1;
+
+    UE tab[2] = { ue1, ue2 };
+
+    int choix;
+    do{
+        printf("\n1. Afficher les moyennes\n");
+        printf("0. Quitter\n");
+        printf("Choix : ");
+        scanf("%d", &choix);
+
+        if(choix==1){
+            afficher_moyennes(tab, 2);
+        }else if(choix==0){
+            printf("Au revoir !\n");
+        }else{ printf("ERREUR : Choix invalide !\n");}
+
+    } while (choix !=0);
+
+    /*
+    afficher_moyennes(tab, 2);
+
+    Matiere m = {0};
+    ajouter_note(&m, 10, 1);
+    ajouter_note(&m, 10, 1);
+    ajouter_note(&m, 10, 1);
+    printf("%.2f\n", moyenne_matiere(&m)); */
+}
