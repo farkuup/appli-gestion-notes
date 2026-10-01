@@ -101,42 +101,95 @@ void ajouter_note(Matiere *m, float valeur, float coeff){
         m->nb_notes += 1;
     }
 }
+int choisir_UE(const UE *tab, int n){
+    for(int i=0; i<n; i++){
+        printf("%d. %s\n", i+1, tab[i].nom);
+    }
+    printf("Choix : ");
+    int choix;
+    int acc = scanf("%d", &choix);
+    if( (acc != 1) || (choix > n) || (choix < 1) ){
+        printf("ERREUR : Saisie incorrecte\n");
+        return -1;
+    }
+    return choix - 1;
+}
+int choisir_matiere(const UE *ue){
+    for(int i=0; i< ue->nb_matieres; i++){
+        printf("%d. %s\n", i+1, ue->matieres[i].nom);
+    }
+    printf("Choix : ");
+    int choix;
+    int acc = scanf("%d", &choix);
+    if( (acc != 1) || (choix > ue->nb_matieres) || (choix < 1) ){
+        printf("ERREUR : Saisie incorrecte\n");
+        return -1;
+    }
+    return choix - 1;
+}
+
+int MCC(){
+    printf("Pas dispo...");
+}
+
 
 //__________________________________________________MAIN_________________________________________________
 int main(){
-    UE ue2 = {0};
-    strcpy(ue2.nom, "Physique-Chimie");
-    ue2.coeff = 9;
-    ue2.nb_matieres = 2;
+    UE ue4 = {0};
+        strcpy(ue4.nom, "Option"); ue4.coeff = 3; ue4.nb_matieres = 1;
+            strcpy(ue4.matieres[0].nom, "Réseaux"); ue4.matieres[0].coeff = 3; ue4.matieres[0].nb_notes = 0;
 
-    ue2.matieres[0].coeff = 4;
-    ue2.matieres[0].notes[0].valeur = 18;
-    ue2.matieres[0].notes[0].coeff = 3;
-    ue2.matieres[0].nb_notes = 1;
+    UE ue3 = {0};
+        strcpy(ue3.nom, "Culture Ingé"); ue3.coeff = 5.5; ue3.nb_matieres = 3;
+            strcpy(ue3.matieres[0].nom, "Anglais"); ue3.matieres[0].coeff = 2.5; ue3.matieres[0].nb_notes = 0;
+            strcpy(ue3.matieres[1].nom, "Sport"); ue3.matieres[1].coeff = 1.5; ue3.matieres[1].nb_notes = 0;
+            strcpy(ue3.matieres[2].nom, "TEC"); ue3.matieres[2].coeff = 1.5; ue3.matieres[2].nb_notes = 0;
+
+    UE ue2 = {0};
+        strcpy(ue2.nom, "Physique-Chimie"); ue2.coeff = 9; ue2.nb_matieres = 2;
+            strcpy(ue2.matieres[0].nom, "Physique"); ue2.matieres[0].coeff = 5; ue2.matieres[0].nb_notes = 0;
+            strcpy(ue2.matieres[1].nom, "Chimie"); ue2.matieres[1].coeff = 4; ue2.matieres[1].nb_notes = 0;
 
     UE ue1 = {0};
-    strcpy(ue1.nom, "Maths-Info");
-    ue1.coeff = 12;
-    ue1.nb_matieres = 3;
+    strcpy(ue1.nom, "Maths-Info"); ue1.coeff = 12; ue1.nb_matieres = 3;
+        strcpy(ue1.matieres[0].nom, "Analyse"); ue1.matieres[0].coeff = 4; ue1.matieres[0].nb_notes = 0;
+        strcpy(ue1.matieres[1].nom, "Algèbre"); ue1.matieres[1].coeff = 4; ue1.matieres[1].nb_notes = 0;
+        strcpy(ue1.matieres[2].nom, "Info"); ue1.matieres[2].coeff = 4; ue1.matieres[2].nb_notes = 0;
 
-    ue1.matieres[0].coeff = 4;
-    ue1.matieres[0].notes[0].valeur = 14;
-    ue1.matieres[0].notes[0].coeff = 3;
-    ue1.matieres[0].nb_notes = 1;
 
-    UE tab[2] = { ue1, ue2 };
+    UE tab[4] = { ue1, ue2, ue3, ue4 };
 
     int choix;
+    int nb_ue = sizeof(tab) / sizeof(tab[0]);
+    
     do{
         printf("\n1. Afficher les moyennes\n");
-        printf("0. Quitter\n");
-        printf("Choix : ");
-        scanf("%d", &choix);
+            printf("2. Ajouter une note\n");
+            printf("0. Quitter\n\n");
+            printf("Choix : "); scanf("%d", &choix); putchar('\n');
 
         if(choix==1){
-            afficher_moyennes(tab, 2);
+            afficher_moyennes(tab, nb_ue);
+
         }else if(choix==0){
-            printf("Au revoir !\n");
+            printf("\nAu revoir !\n");
+
+        }else if(choix==2){ putchar('\n');
+            int i_ue  = choisir_UE(tab,nb_ue); if(i_ue == -1){ continue;} putchar('\n');
+            int i_mat = choisir_matiere(&tab[i_ue]); if(i_mat == -1){ continue;}
+            float valeur, coeff;
+
+            printf("Insérer la note : ");
+                int acc = scanf("%f", &valeur);
+                if(acc != 1 || valeur < 0 || valeur > 20){ printf("ERREUR : Note invalide (entre 0 et 20)\n");continue;}
+
+            printf("...et son coeff : ");
+                int acc1 = scanf("%f", &coeff);
+                if(acc1 != 1 || coeff <= 0 || coeff > 5){ printf("ERREUR : Coeff invalide (entre 0 et 5)\n"); continue;}
+
+            ajouter_note(&tab[i_ue].matieres[i_mat], valeur, coeff);
+            printf("Note ajoutée !\n");
+
         }else{ printf("ERREUR : Choix invalide !\n");}
 
     } while (choix !=0);
