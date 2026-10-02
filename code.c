@@ -128,10 +128,35 @@ int choisir_matiere(const UE *ue){
     return choix - 1;
 }
 
-int MCC(){
+void MCC(){
     printf("Pas dispo...");
 }
 
+void sauvegarder(const UE *tab, int n){
+    FILE *f = fopen("notes.txt", "w");
+    if(f == NULL){ printf("ERREUR : Ouverture du fichier impossible\n"); return;}
+    for(int i=0; i<n; i++){       
+        for(int j=0; j<tab[i].nb_matieres;j++){
+            for(int k=0; k<tab[i].matieres[j].nb_notes; k++){
+                fprintf(f, "%d %d %.2f %.2f\n", i, j, tab[i].matieres[j].notes[k].valeur, tab[i].matieres[j].notes[k].coeff);
+            }
+        } 
+    }
+    fclose(f);
+
+}
+void charger(UE *tab, int n){
+    FILE *f = fopen("notes.txt", "r"); if(f==NULL){return;}
+    int i, j;
+    float valeur, coeff;
+
+    while((fscanf(f, "%d %d %f %f", &i, &j, &valeur, &coeff) == 4)){
+        if( (i>=0 && i<n) && (j>=0 && j<(tab[i].nb_matieres)) ){
+            ajouter_note(&tab[i].matieres[j], valeur, coeff);
+        }
+    }
+    fclose(f);
+}
 
 //__________________________________________________MAIN_________________________________________________
 int main(){
@@ -161,6 +186,7 @@ int main(){
 
     int choix;
     int nb_ue = sizeof(tab) / sizeof(tab[0]);
+    charger(tab, nb_ue);
     
     do{
         printf("\n1. Afficher les moyennes\n");
@@ -172,6 +198,7 @@ int main(){
             afficher_moyennes(tab, nb_ue);
 
         }else if(choix==0){
+            sauvegarder(tab, nb_ue);
             printf("\nAu revoir !\n");
 
         }else if(choix==2){ putchar('\n');
@@ -193,13 +220,4 @@ int main(){
         }else{ printf("ERREUR : Choix invalide !\n");}
 
     } while (choix !=0);
-
-    /*
-    afficher_moyennes(tab, 2);
-
-    Matiere m = {0};
-    ajouter_note(&m, 10, 1);
-    ajouter_note(&m, 10, 1);
-    ajouter_note(&m, 10, 1);
-    printf("%.2f\n", moyenne_matiere(&m)); */
 }
