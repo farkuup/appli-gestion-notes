@@ -40,6 +40,12 @@ float moyenne_generale(const UE *tab, int n);
 Indice sous_limite_UE(const UE *tab, int n);
 Indice sous_limite_mat(const UE *tab, int n);
 
+// Lit le fichier de structure (voir structure.txt) et remplit tab.
+// Renvoie le nombre d'UE lues (au moins 1), ou -1 en cas d'erreur.
+// En cas d'erreur, *ligne_erreur vaut le numéro de la ligne fautive
+// (0 si le fichier n'a pas pu être ouvert).
+int charger_structure(const char *chemin, UE *tab, int max_ue, int *ligne_erreur);
+
 // Nombre total de matières, toutes UE confondues.
 int nombre_matieres(const UE *tab, int n);
 // Retrouve (UE, matière) à partir d'un numéro "global" de matière (à partir de 0,

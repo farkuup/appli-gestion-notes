@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include "moteur.h"
 
@@ -68,6 +69,66 @@ Indice sous_limite_mat(const UE *tab, int n){
         }
     }
     return trouve;
+}
+
+int charger_structure(const char *chemin, UE *tab, int max_ue, int *ligne_erreur){
+    *ligne_erreur = 0;
+    FILE *f = fopen(chemin, "r");
+    if(f == NULL){ return -1; }
+
+    char ligne[256];
+    int num = 0;       // numéro de la ligne lue
+    int nb_ue = 0;     // UE déjà ouvertes
+
+    while(fgets(ligne, sizeof(ligne), f) != NULL){
+        num++;
+
+        // on accepte la virgule décimale : 5,5 devient 5.5
+        for(char *p = ligne; *p != '\0'; p++){
+            if(*p == ','){ *p = '.'; }
+        }
+
+        if(ligne[0] == '#' || ligne[0] == '\n' || ligne[0] == '\r' || ligne[0] == '\0'){
+            continue;
+        }
+
+        char nom[32];
+        float coeff, limite;
+
+        if(strncmp(ligne, "UE;", 3) == 0){
+            if(sscanf(ligne, "UE;%31[^;];%f;%f", nom, &coeff, &limite) != 3 || nb_ue >= max_ue){
+                *ligne_erreur = num; fclose(f); return -1;
+            }
+            UE *u = &tab[nb_ue];
+            memset(u, 0, sizeof(UE));
+            strcpy(u->nom, nom);
+            u->coeff  = coeff;
+            u->limite = limite;
+            nb_ue++;
+
+        }else if(strncmp(ligne, "MATIERE;", 8) == 0){
+            if(nb_ue == 0 || sscanf(ligne, "MATIERE;%31[^;];%f;%f", nom, &coeff, &limite) != 3){
+                *ligne_erreur = num; fclose(f); return -1;
+            }
+            UE *u = &tab[nb_ue - 1];
+            if(u->nb_matieres >= MAX_MATIERES){
+                *ligne_erreur = num; fclose(f); return -1;
+            }
+            Matiere *m = &u->matieres[u->nb_matieres];
+            memset(m, 0, sizeof(Matiere));
+            strcpy(m->nom, nom);
+            m->coeff  = coeff;
+            m->limite = limite;
+            u->nb_matieres++;
+
+        }else{
+            *ligne_erreur = num; fclose(f); return -1;
+        }
+    }
+    fclose(f);
+
+    if(nb_ue == 0){ *ligne_erreur = num; return -1; }
+    return nb_ue;
 }
 
 int nombre_matieres(const UE *tab, int n){

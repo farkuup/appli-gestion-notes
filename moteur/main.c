@@ -151,32 +151,19 @@ void afficher_moyennes(const UE *tab, int n){
 }
 //__________________________________________________MAIN_________________________________________________
 int main(){
-    UE ue4 = {0};
-        strcpy(ue4.nom, "Option"); ue4.coeff = 3; ue4.nb_matieres = 1;
-            strcpy(ue4.matieres[0].nom, "Réseaux"); ue4.matieres[0].coeff = 3; ue4.matieres[0].nb_notes = 0;
-
-    UE ue3 = {0};
-        strcpy(ue3.nom, "Culture Ingé"); ue3.coeff = 5.5; ue3.nb_matieres = 3; ue3.limite = 10;
-            strcpy(ue3.matieres[0].nom, "Anglais"); ue3.matieres[0].coeff = 2.5; ue3.matieres[0].nb_notes = 0; ue3.matieres[0].limite = 8;
-            strcpy(ue3.matieres[1].nom, "Sport"); ue3.matieres[1].coeff = 1.5; ue3.matieres[1].nb_notes = 0; ue3.matieres[1].limite = 8;
-            strcpy(ue3.matieres[2].nom, "TEC"); ue3.matieres[2].coeff = 1.5; ue3.matieres[2].nb_notes = 0; ue3.matieres[2].limite = 10;
-
-    UE ue2 = {0};
-        strcpy(ue2.nom, "Physique-Chimie"); ue2.coeff = 9; ue2.nb_matieres = 2; ue2.limite = 7;
-            strcpy(ue2.matieres[0].nom, "Physique"); ue2.matieres[0].coeff = 5; ue2.matieres[0].nb_notes = 0;
-            strcpy(ue2.matieres[1].nom, "Chimie"); ue2.matieres[1].coeff = 4; ue2.matieres[1].nb_notes = 0;
-
-    UE ue1 = {0};
-    strcpy(ue1.nom, "Maths-Info"); ue1.coeff = 12; ue1.nb_matieres = 3; ue1.limite = 7;
-        strcpy(ue1.matieres[0].nom, "Analyse"); ue1.matieres[0].coeff = 4; ue1.matieres[0].nb_notes = 0;
-        strcpy(ue1.matieres[1].nom, "Algèbre"); ue1.matieres[1].coeff = 4; ue1.matieres[1].nb_notes = 0;
-        strcpy(ue1.matieres[2].nom, "Info"); ue1.matieres[2].coeff = 4; ue1.matieres[2].nb_notes = 0;
-
-
-    UE tab[4] = { ue1, ue2, ue3, ue4 };
+    UE tab[MAX_UE] = {0};
+    int ligne_erreur;
+    int nb_ue = charger_structure("structure.txt", tab, MAX_UE, &ligne_erreur);
+    if(nb_ue < 0){
+        if(ligne_erreur == 0){
+            printf("ERREUR : impossible d'ouvrir structure.txt (lance le programme depuis son dossier)\n");
+        }else{
+            printf("ERREUR : structure.txt est incorrect à la ligne %d\n", ligne_erreur);
+        }
+        return 1;
+    }
 
     int choix=-1;
-    int nb_ue = sizeof(tab) / sizeof(tab[0]);
     charger(tab, nb_ue);
     
     do{
