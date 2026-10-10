@@ -5,9 +5,14 @@
 #define MAX_MATIERES   4
 #define MAX_UE         5
 
+#define NB_TYPES        5
+#define LONG_INTITULE  64
+
+// Un type de note est un numéro : son nom est dans nom_type(numero).
 typedef struct {
-    char type[32]; // DS, TP, Khôlle, CC
-    float valeur; // /20
+    int type;                       // 0 = DS, 1 = TP, 2 = Khôlle, 3 = CC, 4 = Autre
+    char intitule[LONG_INTITULE];   // ex. "DST 1"
+    float valeur;                   // /20
     float coeff;
 }Note;
 typedef struct {
@@ -34,7 +39,18 @@ float moyenne_UE(const UE *ue);
 float moyenne_generale(const UE *tab, int n);
 Indice sous_limite_UE(const UE *tab, int n);
 Indice sous_limite_mat(const UE *tab, int n);
-// Renvoie 0 si la note est ajoutée, -1 s'il y a déjà trop de notes.
-int ajouter_note(Matiere *m, float valeur, float coeff);
+
+// Nombre total de matières, toutes UE confondues.
+int nombre_matieres(const UE *tab, int n);
+// Retrouve (UE, matière) à partir d'un numéro "global" de matière (à partir de 0,
+// dans l'ordre des UE puis des matières). Renvoie {-1, -1} si le numéro n'existe pas.
+Indice trouver_matiere(const UE *tab, int n, int numero);
+// Nom d'un type de note ("DS", "TP"...), ou "?" si le numéro est invalide.
+const char *nom_type(int type);
+
+// Renvoie 0 si la note est ajoutée, -1 s'il y a déjà trop de notes,
+// -2 si le type est invalide. Les ';' et retours à la ligne de l'intitulé
+// sont remplacés par des espaces (ils casseraient le fichier de sauvegarde).
+int ajouter_note(Matiere *m, int type, const char *intitule, float valeur, float coeff);
 
 #endif

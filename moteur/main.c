@@ -17,15 +17,16 @@ void vider_tampon(){
 void sauvegarder(const UE *tab, int n){
     FILE *f = fopen("notes.txt", "w");
     if(f == NULL){ printf("ERREUR : Ouverture du fichier impossible\n"); return;}
-    for(int i=0; i<n; i++){       
+    for(int i=0; i<n; i++){
         for(int j=0; j<tab[i].nb_matieres;j++){
             for(int k=0; k<tab[i].matieres[j].nb_notes; k++){
-                fprintf(f, "%d %d %.2f %.2f\n", i, j, tab[i].matieres[j].notes[k].valeur, tab[i].matieres[j].notes[k].coeff);
+                const Note *no = &tab[i].matieres[j].notes[k];
+                // UE ; matière ; type ; valeur ; coeff ; intitulé (texte libre, en dernier)
+                fprintf(f, "%d;%d;%d;%.2f;%.2f;%s\n", i, j, no->type, no->valeur, no->coeff, no->intitule);
             }
-        } 
+        }
     }
     fclose(f);
-
 }
 
 
@@ -68,14 +69,56 @@ int choisir_matiere(const UE *ue){
     return choix - 1;
 }
 
+// Affiche toutes les matières numérotées (avec leur UE) et renvoie celle choisie.
+// Renvoie {-1, -1} si la saisie est invalide.
+Indice choisir_matiere_globale(const UE *tab, int n){
+    Indice vide = {-1, -1};
+    int total = nombre_matieres(tab, n);
+    for(int k=0; k<total; k++){
+        Indice p = trouver_matiere(tab, n, k);
+        printf("%2d. %s\n", k+1, tab[p.UE].matieres[p.MAT].nom);
+    }
+    printf("Matière : ");
+    int choix = -1;
+    int acc = scanf("%d", &choix);
+    if( (acc != 1) || (choix > total) || (choix < 1) ){
+        printf("ERREUR : Saisie incorrecte\n");
+        vider_tampon();
+        return vide;
+    }
+    return trouver_matiere(tab, n, choix - 1);
+}
+int choisir_type(){
+    for(int i=0; i<NB_TYPES; i++){
+        printf("%d. %s\n", i+1, nom_type(i));
+    }
+    printf("Type : ");
+    int choix = -1;
+    int acc = scanf("%d", &choix);
+    if( (acc != 1) || (choix > NB_TYPES) || (choix < 1) ){
+        printf("ERREUR : Saisie incorrecte\n");
+        vider_tampon();
+        return -1;
+    }
+    return choix - 1;
+}
+// Lit une ligne de texte (avec espaces) dans dest, sans le retour à la ligne.
+void lire_ligne(char *dest, int taille){
+    vider_tampon();   // jette le reste de la ligne précédente
+    if(fgets(dest, taille, stdin) == NULL){ dest[0] = '\0'; return; }
+    dest[strcspn(dest, "\n")] = '\0';
+}
+
 void charger(UE *tab, int n){
     FILE *f = fopen("notes.txt", "r"); if(f==NULL){return;}
-    int i, j;
+    int i, j, type;
     float valeur, coeff;
+    char intitule[LONG_INTITULE];
 
-    while((fscanf(f, "%d %d %f %f", &i, &j, &valeur, &coeff) == 4)){
+    // %63[^\n] lit tout le reste de la ligne (les espaces compris)
+    while(fscanf(f, "%d;%d;%d;%f;%f;%63[^\n]", &i, &j, &type, &valeur, &coeff, intitule) == 6){
         if( (i>=0 && i<n) && (j>=0 && j<(tab[i].nb_matieres)) ){
-            ajouter_note(&tab[i].matieres[j], valeur, coeff);
+            ajouter_note(&tab[i].matieres[j], type, intitule, valeur, coeff);
         }
     }
     fclose(f);
@@ -157,10 +200,14 @@ int main(){
             printf("\nAu revoir !\n");
 
         }else if(choix==2){ putchar('\n');
-            int i_ue  = choisir_UE(tab,nb_ue); if(i_ue == -1){ continue;} putchar('\n');
-            int i_mat = choisir_matiere(&tab[i_ue]); if(i_mat == -1){ continue;}
-            float valeur, coeff;
+            Indice cible = choisir_matiere_globale(tab, nb_ue); if(cible.UE == -1){ continue;} putchar('\n');
+            int type = choisir_type(); if(type == -1){ continue;} putchar('\n');
 
+            char intitule[LONG_INTITULE];
+            printf("Intitulé (ex. DST 1) : ");
+            lire_ligne(intitule, LONG_INTITULE);
+
+            float valeur, coeff;
             printf("Insérer la note : ");
                 int acc = scanf("%f", &valeur);
                 if(acc != 1 || valeur < 0 || valeur > 20){ vider_tampon(); printf("ERREUR : Note invalide (entre 0 et 20)\n");continue;}
@@ -169,7 +216,7 @@ int main(){
                 int acc1 = scanf("%f", &coeff);
                 if(acc1 != 1 || coeff <= 0 || coeff > 5){ vider_tampon(); printf("ERREUR : Coeff invalide (entre 0 et 5)\n"); continue;}
 
-            if(ajouter_note(&tab[i_ue].matieres[i_mat], valeur, coeff) == -1){
+            if(ajouter_note(&tab[cible.UE].matieres[cible.MAT], type, intitule, valeur, coeff) != 0){
                 printf("ERREUR : Trop de notes !\n");
             }else{
                 printf("Note ajoutée !\n");

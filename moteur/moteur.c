@@ -1,3 +1,4 @@
+#include <string.h>
 #include "moteur.h"
 
 float moyenne_matiere(const Matiere *m){
@@ -69,12 +70,54 @@ Indice sous_limite_mat(const UE *tab, int n){
     return trouve;
 }
 
-int ajouter_note(Matiere *m, float valeur, float coeff){
+int nombre_matieres(const UE *tab, int n){
+    int total = 0;
+    for(int i=0; i<n; i++){
+        total += tab[i].nb_matieres;
+    }
+    return total;
+}
+
+Indice trouver_matiere(const UE *tab, int n, int numero){
+    Indice trouve = {-1, -1};
+    if(numero < 0){ return trouve; }
+    int vues = 0;                               // matières déjà passées
+    for(int i=0; i<n; i++){
+        if(numero < vues + tab[i].nb_matieres){
+            trouve.UE  = i;
+            trouve.MAT = numero - vues;
+            return trouve;
+        }
+        vues += tab[i].nb_matieres;
+    }
+    return trouve;
+}
+
+static const char *NOMS_TYPES[NB_TYPES] = { "DS", "TP", "Khôlle", "CC", "Autre" };
+
+const char *nom_type(int type){
+    if(type < 0 || type >= NB_TYPES){ return "?"; }
+    return NOMS_TYPES[type];
+}
+
+int ajouter_note(Matiere *m, int type, const char *intitule, float valeur, float coeff){
     if(m->nb_notes >= MAX_NOTES){
         return -1;
     }
-    m->notes[m->nb_notes].coeff  = coeff;
-    m->notes[m->nb_notes].valeur = valeur;
+    if(type < 0 || type >= NB_TYPES){
+        return -2;
+    }
+    Note *n = &m->notes[m->nb_notes];
+    n->type   = type;
+    n->valeur = valeur;
+    n->coeff  = coeff;
+
+    strncpy(n->intitule, intitule, LONG_INTITULE - 1);
+    n->intitule[LONG_INTITULE - 1] = '\0';
+    for(char *p = n->intitule; *p != '\0'; p++){
+        if(*p == ';' || *p == '\n' || *p == '\r'){ *p = ' '; }
+    }
+
     m->nb_notes += 1;
     return 0;
 }
