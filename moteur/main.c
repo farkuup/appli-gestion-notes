@@ -69,8 +69,6 @@ int choisir_matiere(const UE *ue){
     return choix - 1;
 }
 
-// Affiche toutes les matières numérotées (avec leur UE) et renvoie celle choisie.
-// Renvoie {-1, -1} si la saisie est invalide.
 Indice choisir_matiere_globale(const UE *tab, int n){
     Indice vide = {-1, -1};
     int total = nombre_matieres(tab, n);
@@ -102,7 +100,6 @@ int choisir_type(){
     }
     return choix - 1;
 }
-// Lit une ligne de texte (avec espaces) dans dest, sans le retour à la ligne.
 void lire_ligne(char *dest, int taille){
     vider_tampon();   // jette le reste de la ligne précédente
     if(fgets(dest, taille, stdin) == NULL){ dest[0] = '\0'; return; }
@@ -115,7 +112,6 @@ void charger(UE *tab, int n){
     float valeur, coeff;
     char intitule[LONG_INTITULE];
 
-    // %63[^\n] lit tout le reste de la ligne (les espaces compris)
     while(fscanf(f, "%d;%d;%d;%f;%f;%63[^\n]", &i, &j, &type, &valeur, &coeff, intitule) == 6){
         if( (i>=0 && i<n) && (j>=0 && j<(tab[i].nb_matieres)) ){
             ajouter_note(&tab[i].matieres[j], type, intitule, valeur, coeff);

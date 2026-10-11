@@ -82,8 +82,6 @@ int charger_structure(const char *chemin, UE *tab, int max_ue, int *ligne_erreur
 
     while(fgets(ligne, sizeof(ligne), f) != NULL){
         num++;
-
-        // on accepte la virgule décimale : 5,5 devient 5.5
         for(char *p = ligne; *p != '\0'; p++){
             if(*p == ','){ *p = '.'; }
         }
@@ -181,4 +179,64 @@ int ajouter_note(Matiere *m, int type, const char *intitule, float valeur, float
 
     m->nb_notes += 1;
     return 0;
+}
+
+int supprimer_note(Matiere *m, int i){
+    if(i < 0 || i >= m->nb_notes){ return -1; }
+    for(int k=i; k<m->nb_notes-1; k++){
+        m->notes[k] = m->notes[k+1];
+    }
+    m->nb_notes--;
+    return 0;
+}
+
+int exporter_notes(const UE *tab, int n, char *sortie, int taille){
+    int ecrit = 0;
+    sortie[0] = '\0';
+    for(int i=0; i<n; i++){
+        for(int j=0; j<tab[i].nb_matieres; j++){
+            const Matiere *m = &tab[i].matieres[j];
+            for(int k=0; k<m->nb_notes; k++){
+                const Note *no = &m->notes[k];
+                int r = snprintf(sortie + ecrit, taille - ecrit, "%d;%d;%d;%.2f;%.2f;%s\n",
+                                 i, j, no->type, no->valeur, no->coeff, no->intitule);
+                if(r < 0 || r >= taille - ecrit){ return -1; }
+                ecrit += r;
+            }
+        }
+    }
+    return ecrit;
+}
+
+int importer_notes(UE *tab, int n, const char *texte, int *ligne_erreur){
+    *ligne_erreur = 0;
+    for(int i=0; i<n; i++){
+        for(int j=0; j<tab[i].nb_matieres; j++){ tab[i].matieres[j].nb_notes = 0; }
+    }
+    int lues = 0, num = 0;
+    const char *p = texte;
+    while(*p != '\0'){
+        char ligne[160];
+        int len = 0;
+        while(*p != '\0' && *p != '\n'){
+            if(len < (int)sizeof(ligne) - 1 && *p != '\r'){ ligne[len++] = *p; }
+            p++;
+        }
+        if(*p == '\n'){ p++; }
+        ligne[len] = '\0';
+        num++;
+        if(len == 0){ continue; }
+
+        int u, m, type;
+        float valeur, coeff;
+        char intitule[LONG_INTITULE];
+        if(sscanf(ligne, "%d;%d;%d;%f;%f;%63[^\n]", &u, &m, &type, &valeur, &coeff, intitule) != 6
+           || u < 0 || u >= n || m < 0 || m >= tab[u].nb_matieres
+           || ajouter_note(&tab[u].matieres[m], type, intitule, valeur, coeff) != 0){
+            *ligne_erreur = num;
+            return -1;
+        }
+        lues++;
+    }
+    return lues;
 }

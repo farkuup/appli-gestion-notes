@@ -1,0 +1,25 @@
+# Structure du semestre : Sonote lit ce fichier au démarrage.
+#
+# Une ligne UE ouvre une UE, les lignes MATIERE qui suivent lui appartiennent.
+#   UE;nom;coeff;limite
+#   MATIERE;nom;coeff;limite
+# limite = moyenne minimale pour compenser (0 = pas de limite).
+# L'ORDRE COMPTE : il est utilisé dans notes.txt. Ne pas réordonner les UE ni les matières #sans vider notes.txt.
+
+# Semestre 3
+UE;Maths-Info;12;7
+MATIERE;Analyse;4;0
+MATIERE;Algèbre;4;0
+MATIERE;Info;4;0
+
+UE;Physique-Chimie;9;7
+MATIERE;Physique;5;0
+MATIERE;Chimie;4;0
+
+UE;Culture Ingé;5.5;10
+MATIERE;Anglais;2.5;8
+MATIERE;Sport;1.5;8
+MATIERE;TEC;1.5;10
+
+UE;Option;3;0
+MATIERE;Réseaux;3;0

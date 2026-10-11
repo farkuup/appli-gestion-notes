@@ -8,7 +8,6 @@
 #define NB_TYPES        5
 #define LONG_INTITULE  64
 
-// Un type de note est un numéro : son nom est dans nom_type(numero).
 typedef struct {
     int type;                       // 0 = DS, 1 = TP, 2 = Khôlle, 3 = CC, 4 = Autre
     char intitule[LONG_INTITULE];   // ex. "DST 1"
@@ -40,23 +39,19 @@ float moyenne_generale(const UE *tab, int n);
 Indice sous_limite_UE(const UE *tab, int n);
 Indice sous_limite_mat(const UE *tab, int n);
 
-// Lit le fichier de structure (voir structure.txt) et remplit tab.
-// Renvoie le nombre d'UE lues (au moins 1), ou -1 en cas d'erreur.
-// En cas d'erreur, *ligne_erreur vaut le numéro de la ligne fautive
-// (0 si le fichier n'a pas pu être ouvert).
-int charger_structure(const char *chemin, UE *tab, int max_ue, int *ligne_erreur);
+int charger_structure(const char *chemin, UE *tab, int max_ue, int *ligne_erreur); /* lit le fichier de structure (voir structure.txt) et remplit tab. Renvoie le nombre d'UE lues (au moins 1), ou -1 en cas d'erreur
+En cas d'erreur, *ligne_erreur vaut le numéro de la ligne fautive (0 si le fichier n'a pas pu être ouvert) */
 
-// Nombre total de matières, toutes UE confondues.
-int nombre_matieres(const UE *tab, int n);
-// Retrouve (UE, matière) à partir d'un numéro "global" de matière (à partir de 0,
-// dans l'ordre des UE puis des matières). Renvoie {-1, -1} si le numéro n'existe pas.
+int nombre_matieres(const UE *tab, int n); // nb total de matières
 Indice trouver_matiere(const UE *tab, int n, int numero);
-// Nom d'un type de note ("DS", "TP"...), ou "?" si le numéro est invalide.
-const char *nom_type(int type);
 
-// Renvoie 0 si la note est ajoutée, -1 s'il y a déjà trop de notes,
-// -2 si le type est invalide. Les ';' et retours à la ligne de l'intitulé
-// sont remplacés par des espaces (ils casseraient le fichier de sauvegarde).
-int ajouter_note(Matiere *m, int type, const char *intitule, float valeur, float coeff);
+const char *nom_type(int type); // nom d'un type de note ("DS", "TP"...), ou "?" si le numéro est invalide
+
+int ajouter_note(Matiere *m, int type, const char *intitule, float valeur, float coeff); // renvoie 0 si la note est ajoutée, -1 s'il y a déjà trop de notes, -2 si le type est invalide
+int supprimer_note(Matiere *m, int i);
+
+int exporter_notes(const UE *tab, int n, char *sortie, int taille); // écrit toutes les notes dans `sortie` (UE;matière;type;valeur;coeff;intitulé)*/
+int importer_notes(UE *tab, int n, const char *texte, int *ligne_erreur); // efface les notes de tab puis relit le texte au format ↑
+// (*ligne_erreur = son numéro).
 
 #endif
