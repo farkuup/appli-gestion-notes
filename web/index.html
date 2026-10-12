@@ -4,8 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f3a5f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Sonote</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root { --bg:#f4f6fa; --carte:#fff; --texte:#1c2330; --doux:#6b7686; --accent:#1f3a5f; --ok:#1d8a4b; --ko:#c0392b; --bord:#dde2ea; }
   @media (prefers-color-scheme: dark) {
@@ -183,6 +187,10 @@ $("importer").onclick = () => {
 };
 
 creerSonote().then(demarrer);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 </script>
 </body>
 </html>

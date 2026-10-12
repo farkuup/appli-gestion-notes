@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f3a5f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Sonote</title>
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root { --bg:#f4f6fa; --carte:#fff; --texte:#1c2330; --doux:#6b7686; --accent:#1f3a5f; --ok:#1d8a4b; --ko:#c0392b; --bord:#dde2ea; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12161d; --carte:#1b212b; --texte:#e8ecf2; --doux:#8f9bad; --accent:#6fa0e0; --ok:#4cc37f; --ko:#ff6b5b; --bord:#2b3342; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.4 system-ui, sans-serif; background:var(--bg); color:var(--texte); padding:0 16px 80px; }
+  header { padding:20px 0 8px; }
+  h1 { margin:0; font-size:1.4rem; color:var(--accent); }
+  .carte { background:var(--carte); border:1px solid var(--bord); border-radius:14px; padding:14px; margin:12px 0; }
+  .general { text-align:center; }
+  .gros { font-size:2.6rem; font-weight:700; }
+  .ok { color:var(--ok); } .ko { color:var(--ko); }
+  .doux { color:var(--doux); font-size:.9rem; }
+  .alerte { background:color-mix(in srgb, var(--ko) 14%, transparent); border-left:4px solid var(--ko); padding:8px 10px; margin:6px 0; border-radius:6px; font-size:.95rem; }
+  .ue-titre { display:flex; justify-content:space-between; align-items:baseline; font-weight:700; }
+  .mat { border-top:1px solid var(--bord); margin-top:10px; padding-top:8px; }
+  .mat-titre { display:flex; justify-content:space-between; }
+  .note { display:flex; justify-content:space-between; align-items:center; font-size:.92rem; color:var(--doux); padding:4px 0; }
+  .note button { background:none; border:none; color:var(--ko); font-size:1.1rem; padding:6px 10px; }
+  label { display:block; margin:10px 0 4px; font-size:.85rem; color:var(--doux); }
+  select, input { width:100%; font-size:1rem; padding:12px; border-radius:10px; border:1px solid var(--bord); background:var(--bg); color:var(--texte); }
+  .ligne { display:flex; gap:10px; } .ligne > div { flex:1; }
+  .btn { width:100%; margin-top:14px; padding:14px; border:none; border-radius:12px; background:var(--accent); color:#fff; font-size:1rem; font-weight:600; }
+  .btn.second { background:transparent; color:var(--accent); border:1px solid var(--accent); margin-top:8px; }
+  textarea { width:100%; min-height:120px; font:13px monospace; border-radius:10px; border:1px solid var(--bord); background:var(--bg); color:var(--texte); padding:8px; }
+  #msg { min-height:1.3em; margin-top:8px; font-size:.9rem; }
+  #erreur { display:none; }
+</style>
+</head>
+<body>
+<header><h1>Sonote</h1><div class="doux">Semestre 3 · CP2I2 Généraliste</div></header>
+
+<div id="erreur" class="carte ko"></div>
+<main id="app">
+  <div class="carte general"><div class="doux">Moyenne générale</div><div class="gros" id="moy-gen">—</div><div id="verdict" class="doux"></div></div>
+  <div id="alertes"></div>
+
+  <div class="carte">
+    <strong>Ajouter une note</strong>
+    <label for="f-mat">Matière</label><select id="f-mat"></select>
+    <div class="ligne">
+      <div><label for="f-type">Type</label><select id="f-type"></select></div>
+      <div><label for="f-int">Intitulé</label><input id="f-int" placeholder="DST 1" maxlength="63"></div>
+    </div>
+    <div class="ligne">
+      <div><label for="f-val">Note /20</label><input id="f-val" type="text" inputmode="decimal" placeholder="12,5"></div>
+      <div><label for="f-coef">Coeff</label><input id="f-coef" type="text" inputmode="decimal" placeholder="3" value="1"></div>
+    </div>
+    <button class="btn" id="ajouter">Ajouter</button>
+    <div id="msg"></div>
+  </div>
+
+  <div id="ues"></div>
+
+  <div class="carte">
+    <strong>Sauvegarde</strong>
+    <div class="doux">Les notes restent dans ce navigateur. Tu peux aussi copier/coller le texte ci-dessous pour les transférer (même format que notes.txt).</div>
+    <textarea id="export" spellcheck="false"></textarea>
+    <button class="btn second" id="importer">Charger ce texte</button>
+  </div>
+</main>
+
+<script src="sonote.js"></script>
+<script>
+const CLE = "sonote-notes";
+const $ = id => document.getElementById(id);
+let C = {};   // fonctions du C
+
+const fmt = x => x < 0 ? "—" : x.toFixed(2).replace(".", ",");
+const lireNombre = s => parseFloat(String(s).trim().replace(",", "."));
+
+
+function demarrer(Module) {
+  window.Module = Module;
+  const f = (nom, ret, args) => Module.cwrap("sn_" + nom, ret, args);
+  C = {
+    init: f("init", "number", ["string"]), ligneErreur: f("ligne_erreur", "number", []),
+    nbUe: f("nb_ue", "number", []), nbMat: f("nb_mat", "number", ["number"]),
+    nomUe: f("nom_ue", "string", ["number"]), limUe: f("limite_ue", "number", ["number"]),
+    nomMat: f("nom_mat", "string", ["number", "number"]), limMat: f("limite_mat", "number", ["number", "number"]),
+    nbTypes: f("nb_types", "number", []), nomType: f("nom_type", "string", ["number"]),
+    nbNotes: f("nb_notes", "number", ["number", "number"]),
+    nType: f("note_type", "number", ["number", "number", "number"]),
+    nInt: f("note_intitule", "string", ["number", "number", "number"]),
+    nVal: f("note_valeur", "number", ["number", "number", "number"]),
+    nCoef: f("note_coeff", "number", ["number", "number", "number"]),
+    ajouter: f("ajouter_note", "number", ["number", "number", "number", "string", "number", "number"]),
+    supprimer: f("supprimer_note", "number", ["number", "number", "number"]),
+    moyMat: f("moy_mat", "number", ["number", "number"]), moyUe: f("moy_ue", "number", ["number"]),
+    moyGen: f("moy_gen", "number", []),
+    matSous: f("mat_sous_limite", "number", ["number", "number"]), ueSous: f("ue_sous_limite", "number", ["number"]),
+    exporter: f("exporter", "string", []), importer: f("importer", "number", ["string"]),
+  };
+  fetch("structure.txt").then(r => r.text()).then(txt => {
+    Module.FS.writeFile("/structure.txt", txt);
+    if (C.init("/structure.txt") < 0) {
+      $("erreur").style.display = "block";
+      $("erreur").textContent = "structure.txt : erreur ligne " + C.ligneErreur();
+      return;
+    }
+    try { const s = localStorage.getItem(CLE); if (s) C.importer(s); } catch (e) {}
+    construireFormulaire();
+    afficher();
+  });
+}
+
+function construireFormulaire() {
+  let html = "";
+  for (let u = 0; u < C.nbUe(); u++)
+    for (let m = 0; m < C.nbMat(u); m++)
+      html += `<option value="${u};${m}">${C.nomMat(u, m)} (${C.nomUe(u)})</option>`;
+  $("f-mat").innerHTML = html;
+  let t = "";
+  for (let i = 0; i < C.nbTypes(); i++) t += `<option value="${i}">${C.nomType(i)}</option>`;
+  $("f-type").innerHTML = t;
+}
+
+function echapper(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function afficher() {
+  const gen = C.moyGen();
+  $("moy-gen").textContent = fmt(gen);
+  $("moy-gen").className = "gros " + (gen < 0 ? "" : gen >= 10 ? "ok" : "ko");
+  $("verdict").textContent = gen < 0 ? "Aucune note pour l'instant" : gen >= 10 ? "Au-dessus de 10" : "Moyenne générale insuffisante";
+
+  let alertes = "", ues = "";
+  for (let u = 0; u < C.nbUe(); u++) {
+    const mu = C.moyUe(u);
+    if (C.ueSous(u)) alertes += `<div class="alerte">UE ${echapper(C.nomUe(u))} : ${fmt(mu)} (limite ${C.limUe(u)})</div>`;
+    let mats = "";
+    for (let m = 0; m < C.nbMat(u); m++) {
+      const mm = C.moyMat(u, m), n = C.nbNotes(u, m);
+      if (C.matSous(u, m)) alertes += `<div class="alerte">${echapper(C.nomMat(u, m))} : ${fmt(mm)} (limite ${C.limMat(u, m)})</div>`;
+      let notes = "";
+      for (let k = 0; k < n; k++)
+        notes += `<div class="note"><span>${echapper(C.nomType(C.nType(u, m, k)))} · ${echapper(C.nInt(u, m, k))} — <b>${fmt(C.nVal(u, m, k))}</b> (coeff ${C.nCoef(u, m, k)})</span><button data-u="${u}" data-m="${m}" data-k="${k}" aria-label="Supprimer">✕</button></div>`;
+      mats += `<div class="mat"><div class="mat-titre"><span>${echapper(C.nomMat(u, m))}</span><b class="${mm < 0 ? "" : C.matSous(u, m) ? "ko" : "ok"}">${fmt(mm)}</b></div>${notes}</div>`;
+    }
+    ues += `<div class="carte"><div class="ue-titre"><span>${echapper(C.nomUe(u))}</span><span class="${mu < 0 ? "" : C.ueSous(u) ? "ko" : "ok"}">${fmt(mu)}</span></div>${mats}</div>`;
+  }
+  $("alertes").innerHTML = alertes;
+  $("ues").innerHTML = ues;
+  const texte = C.exporter();
+  $("export").value = texte;
+  try { localStorage.setItem(CLE, texte); } catch (e) {}
+}
+
+function message(t, ko) { $("msg").textContent = t; $("msg").className = ko ? "ko" : "ok"; }
+
+$("ajouter").onclick = () => {
+  const [u, m] = $("f-mat").value.split(";").map(Number);
+  const val = lireNombre($("f-val").value), coef = lireNombre($("f-coef").value);
+  if (isNaN(val) || isNaN(coef)) return message("Note ou coeff illisible.", true);
+  const r = C.ajouter(u, m, Number($("f-type").value), $("f-int").value.trim() || "Sans titre", val, coef);
+  const erreurs = { "-1": "Trop de notes dans cette matière.", "-2": "Type invalide.", "-3": "Matière inconnue.", "-4": "La note doit être entre 0 et 20, le coeff > 0." };
+  if (r !== 0) return message(erreurs[r], true);
+  $("f-int").value = ""; $("f-val").value = "";
+  message("Note ajoutée.");
+  afficher();
+};
+
+$("ues").onclick = e => {
+  const b = e.target.closest("button[data-k]");
+  if (!b) return;
+  C.supprimer(+b.dataset.u, +b.dataset.m, +b.dataset.k);
+  afficher();
+};
+
+$("importer").onclick = () => {
+  const r = C.importer($("export").value);
+  if (r < 0) { message("Ligne " + (-r) + " incorrecte : chargement annulé.", true); C.importer(localStorage.getItem(CLE) || ""); }
+  else message(r + " note(s) chargée(s).");
+  afficher();
+};
+
+creerSonote().then(demarrer);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
